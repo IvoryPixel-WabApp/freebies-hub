@@ -128,14 +128,36 @@
                 e.preventDefault();
                 if (!pdfEmail) return;
                 playClick();
-                setPdfSuccess(true);
                 
-                // ดาวน์โหลดไฟล์ PDF จำลอง
-                const blob = new Blob(["Thank you for downloading the Gen Z Money Habits Guide from IvoryPixelWebApp!\nCheck out our premium systems: https://www.etsy.com/shop/IvoryPixelWebApp"], { type: "text/plain" });
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = "Gen_Z_Money_Habits_Guide.pdf";
-                link.click();
+                // ส่งข้อมูลอีเมลไปบันทึกที่ Google Sheets (URL ที่ Deploy จากสกรีนช็อตของคุณ)
+                const scriptUrl = "https://script.google.com/macros/s/AKfycbzLKu26oCrDrKPp2U050ZgzyKCUAMqCqjMQHbU8h8j0PBrWJu82mnoNhH-HUqj0XkiBrA/exec";
+                
+                fetch(scriptUrl, {
+                    method: "POST",
+                    mode: "no-cors", // อนุญาตส่งข้อมูลข้ามโดเมนไป Google Apps Script แบบ Background
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    body: `email=${encodeURIComponent(pdfEmail)}`
+                })
+                .then(() => {
+                    setPdfSuccess(true);
+                    
+                    // ดาวน์โหลดไฟล์ PDF จริงจากโฟลเดอร์เดียวกัน
+                    const link = document.createElement("a");
+                    link.href = "./Gen_Z_Money_Habits_Guide.pdf";
+                    link.download = "Gen_Z_Money_Habits_Guide.pdf";
+                    link.click();
+                })
+                .catch(err => {
+                    console.error("Error submitting email:", err);
+                    // แม้จะเออเร่อในการเชื่อมต่อ ก็ยังคงอนุญาตดาวน์โหลดไฟล์ให้ผู้ใช้งานเพื่อ UX ที่ดี
+                    setPdfSuccess(true);
+                    const link = document.createElement("a");
+                    link.href = "./Gen_Z_Money_Habits_Guide.pdf";
+                    link.download = "Gen_Z_Money_Habits_Guide.pdf";
+                    link.click();
+                });
             };
 
             return (
